@@ -1,0 +1,237 @@
+﻿﻿@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportData()">Export</button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Pending Claims</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="pendingCount">5</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Approved Claims</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="approvedCount">12</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Requiring Attention</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="attentionCount">3</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Value</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalValue">R42,560</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Recent Claims</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="claimsTable">
+                        <thead>
+                            <tr>
+                                <th>Claim ID</th>
+                                <th>Submitted</th>
+                                <th>Lecturer</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Claims will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <a href="@Url.Action("MyClaims", "Claims")" class="btn btn-outline-primary btn-sm">View All Claims</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="@Url.Action("Create", "Claims")" class="btn btn-primary mb-2"><i class="fas fa-plus-circle me-2"></i> Submit New Claim</a>
+                    <a href="@Url.Action("Upload", "Documents")" class="btn btn-outline-secondary mb-2"><i class="fas fa-file-upload me-2"></i> Upload Documents</a>
+                    <a href="@Url.Action("Index", "Reports")" class="btn btn-outline-secondary mb-2"><i class="fas fa-chart-bar me-2"></i> Generate Report</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title">System Notifications</h5>
+            </div>
+            <div class="card-body" id="notifications">
+                <!-- Notifications will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+            
+            // Mobile menu toggle
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const sidebar = document.getElementById('sidebar');
+            
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('active');
+                    sidebar.classList.toggle('d-none');
+                    sidebar.classList.toggle('d-block');
+                });
+            }
+        });
+
+        function loadDashboardData() {
+            // In a real application, this would be an API call
+            const claims = [
+                { id: 'CL-2023-0087', submitted: '25 Oct 2023', lecturer: 'Dr. Sarah Johnson', amount: 'R5,420', status: 'approved' },
+                { id: 'CL-2023-0088', submitted: '28 Oct 2023', lecturer: 'Prof. Michael Brown', amount: 'R7,850', status: 'submitted' },
+                { id: 'CL-2023-0089', submitted: '01 Nov 2023', lecturer: 'Dr. Emily Chen', amount: 'R4,230', status: 'rejected' }
+            ];
+
+            const tableBody = document.querySelector('#claimsTable tbody');
+            tableBody.innerHTML = '';
+
+            claims.forEach(claim => {
+                const statusClass = `status-${claim.status}`;
+                const statusText = getStatusText(claim.status);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${claim.id}</td>
+                    <td>${claim.submitted}</td>
+                    <td>${claim.lecturer}</td>
+                    <td>${claim.amount}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewClaim('${claim.id}')"><i class="fas fa-eye"></i></button>
+                        ${claim.status === 'submitted' ? 
+                            '<button class="btn btn-sm btn-outline-warning" onclick="editClaim(\'' + claim.id + '\')"><i class="fas fa-edit"></i></button>' : 
+                            '<button class="btn btn-sm btn-outline-success" onclick="downloadClaim(\'' + claim.id + '\')"><i class="fas fa-download"></i></button>'
+                        }
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Update notification alerts
+            const notificationsContainer = document.getElementById('notifications');
+            notificationsContainer.innerHTML = `
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Attention:</strong> 3 claims require your approval
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    System maintenance scheduled for Sunday, 3:00 AM - 6:00 AM
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Your claim CL-2023-0087 has been approved
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'draft': return 'Draft';
+                case 'submitted': return 'Pending Review';
+                case 'approved': return 'Approved';
+                case 'rejected': return 'Rejected';
+                default: return status;
+            }
+        }
+
+        function viewClaim(claimId) {
+            window.location.href = `@Url.Action("Details", "Claims")?id=${claimId}`;
+        }
+
+        function editClaim(claimId) {
+            window.location.href = `@Url.Action("Edit", "Claims")?id=${claimId}`;
+        }
+
+        function downloadClaim(claimId) {
+            // Simulate download
+            alert(`Downloading claim ${claimId}`);
+        }
+
+        function exportData() {
+            // Simulate export functionality
+            alert('Exporting data...');
+        }
+    </script>
+}

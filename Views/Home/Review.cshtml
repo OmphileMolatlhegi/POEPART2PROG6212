@@ -1,0 +1,437 @@
+﻿@{
+    ViewData["Title"] = "Review Claims";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Review Claims</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="filterClaims('all')">All</button>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="filterClaims('submitted')">Pending</button>
+            <button type="button" class="btn btn-sm btn-outline-success" onclick="filterClaims('approved')">Approved</button>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="filterClaims('rejected')">Rejected</button>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-info" onclick="refreshClaims()">
+            <i class="fas fa-sync-alt me-1"></i> Refresh
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title">Claims for Review</h5>
+        <div class="row mt-2">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search claims..." id="searchInput">
+                    <button class="btn btn-outline-secondary" type="button" onclick="searchClaims()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="reviewTable">
+                <thead>
+                    <tr>
+                        <th>Claim ID</th>
+                        <th>Submitted</th>
+                        <th>Lecturer</th>
+                        <th>Month</th>
+                        <th>Hours</th>
+                        <th>Rate</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Claims will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> claims
+            </div>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary" onclick="exportToExcel()">
+                    <i class="fas fa-download me-1"></i> Export to Excel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Review Claim <span id="modalClaimId"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="claimDetails">
+                    <!-- Claim details will be populated here -->
+                </div>
+
+                <div class="mt-4">
+                    <h6>Supporting Documents</h6>
+                    <div id="documentList" class="mb-3">
+                        <!-- Documents will be listed here -->
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <label for="reviewComments" class="form-label">Review Comments *</label>
+                    <textarea class="form-control" id="reviewComments" rows="3" placeholder="Enter your comments for approval or rejection..." required></textarea>
+                    <div class="form-text">Comments are required when rejecting a claim.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" onclick="rejectClaim()">
+                    <i class="fas fa-times me-1"></i> Reject
+                </button>
+                <button type="button" class="btn btn-success" onclick="approveClaim()">
+                    <i class="fas fa-check me-1"></i> Approve
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentClaimId = null;
+        let allClaims = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadClaimsForReview();
+        });
+
+        function loadClaimsForReview(filter = 'all', searchTerm = '') {
+            // Simulated data - in real app, this would be from API
+            allClaims = [
+                {
+                    id: 'CL-2023-0088',
+                    submitted: '28 Oct 2023',
+                    lecturer: 'Prof. Michael Brown',
+                    month: 'October 2023',
+                    hours: 85,
+                    rate: 92.35,
+                    amount: 7849.75,
+                    status: 'submitted',
+                    description: 'Monthly teaching services for undergraduate courses including lectures, tutorials, and student consultations.',
+                    documents: [
+                        { name: 'timesheet.pdf', size: '2.4 MB', type: 'pdf' },
+                        { name: 'contract_agreement.pdf', size: '1.8 MB', type: 'pdf' },
+                        { name: 'student_feedback.xlsx', size: '0.8 MB', type: 'excel' }
+                    ]
+                },
+                {
+                    id: 'CL-2023-0090',
+                    submitted: '02 Nov 2023',
+                    lecturer: 'Dr. Robert Wilson',
+                    month: 'October 2023',
+                    hours: 92,
+                    rate: 95.50,
+                    amount: 8786.00,
+                    status: 'submitted',
+                    description: 'Research supervision and thesis review for postgraduate students. Additional hours for research project coordination.',
+                    documents: [
+                        { name: 'timesheet.pdf', size: '2.1 MB', type: 'pdf' },
+                        { name: 'approval_letter.pdf', size: '3.2 MB', type: 'pdf' }
+                    ]
+                },
+                {
+                    id: 'CL-2023-0087',
+                    submitted: '25 Oct 2023',
+                    lecturer: 'Dr. Sarah Johnson',
+                    month: 'October 2023',
+                    hours: 75,
+                    rate: 89.75,
+                    amount: 6731.25,
+                    status: 'approved',
+                    description: 'Course development and lecture delivery for new curriculum implementation.',
+                    documents: [
+                        { name: 'timesheet_signed.pdf', size: '2.5 MB', type: 'pdf' }
+                    ]
+                },
+                {
+                    id: 'CL-2023-0089',
+                    submitted: '01 Nov 2023',
+                    lecturer: 'Dr. Emily Chen',
+                    month: 'October 2023',
+                    hours: 60,
+                    rate: 85.25,
+                    amount: 5115.00,
+                    status: 'rejected',
+                    description: 'Guest lectures and workshop facilitation for professional development program.',
+                    documents: [
+                        { name: 'workshop_materials.zip', size: '15.7 MB', type: 'archive' }
+                    ],
+                    rejectionReason: 'Insufficient documentation provided for workshop activities.'
+                }
+            ];
+
+            let filteredClaims = allClaims;
+
+            // Apply filter
+            if (filter !== 'all') {
+                filteredClaims = filteredClaims.filter(claim => claim.status === filter);
+            }
+
+            // Apply search
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                filteredClaims = filteredClaims.filter(claim =>
+                    claim.id.toLowerCase().includes(term) ||
+                    claim.lecturer.toLowerCase().includes(term) ||
+                    claim.month.toLowerCase().includes(term) ||
+                    claim.description.toLowerCase().includes(term)
+                );
+            }
+
+            displayClaims(filteredClaims);
+        }
+
+        function displayClaims(claims) {
+            const tableBody = document.querySelector('#reviewTable tbody');
+            tableBody.innerHTML = '';
+
+            claims.forEach(claim => {
+                const statusClass = `status-${claim.status}`;
+                const statusText = getStatusText(claim.status);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${claim.id}</td>
+                    <td>${claim.submitted}</td>
+                    <td>${claim.lecturer}</td>
+                    <td>${claim.month}</td>
+                    <td>${claim.hours}</td>
+                    <td>R ${claim.rate.toFixed(2)}</td>
+                    <td>R ${claim.amount.toFixed(2)}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="openReviewModal('${claim.id}')">
+                            <i class="fas fa-eye me-1"></i> Review
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Update counts
+            document.getElementById('showingCount').textContent = claims.length;
+            document.getElementById('totalCount').textContent = allClaims.length;
+        }
+
+        function filterClaims(status) {
+            loadClaimsForReview(status, document.getElementById('searchInput').value);
+        }
+
+        function searchClaims() {
+            const searchTerm = document.getElementById('searchInput').value;
+            loadClaimsForReview('all', searchTerm);
+        }
+
+        function refreshClaims() {
+            loadClaimsForReview();
+            document.getElementById('searchInput').value = '';
+            showToast('Refreshed', 'Claims list has been updated', 'info');
+        }
+
+        function openReviewModal(claimId) {
+            currentClaimId = claimId;
+            const claim = allClaims.find(c => c.id === claimId);
+
+            if (!claim) return;
+
+            document.getElementById('modalClaimId').textContent = claimId;
+
+            const claimDetails = document.getElementById('claimDetails');
+            claimDetails.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Lecturer:</strong> ${claim.lecturer}</p>
+                        <p><strong>Submitted:</strong> ${claim.submitted}</p>
+                        <p><strong>Claim Month:</strong> ${claim.month}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Hours Worked:</strong> ${claim.hours}</p>
+                        <p><strong>Hourly Rate:</strong> R ${claim.rate.toFixed(2)}</p>
+                        <p><strong>Total Amount:</strong> R ${claim.amount.toFixed(2)}</p>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <p><strong>Description:</strong> ${claim.description}</p>
+                    </div>
+                </div>
+                ${claim.rejectionReason ? `
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <div class="alert alert-warning">
+                            <strong>Rejection Reason:</strong> ${claim.rejectionReason}
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+
+            const documentList = document.getElementById('documentList');
+            documentList.innerHTML = '';
+
+            if (claim.documents && claim.documents.length > 0) {
+                const list = document.createElement('div');
+
+                claim.documents.forEach(doc => {
+                    const docItem = document.createElement('div');
+                    docItem.className = 'card mb-2';
+                    docItem.innerHTML = `
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-file-${doc.type === 'pdf' ? 'pdf text-danger' : doc.type === 'excel' ? 'excel text-success' : 'archive text-warning'} me-2"></i>
+                                    ${doc.name}
+                                    <small class="text-muted ms-2">${doc.size}</small>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="viewDocument('${doc.name}')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="downloadDocument('${doc.name}')">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(docItem);
+                });
+
+                documentList.appendChild(list);
+            } else {
+                documentList.innerHTML = '<p class="text-muted">No supporting documents uploaded.</p>';
+            }
+
+            // Clear comments
+            document.getElementById('reviewComments').value = '';
+
+            const modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+            modal.show();
+        }
+
+        function approveClaim() {
+            if (!currentClaimId) return;
+
+            const comments = document.getElementById('reviewComments').value;
+
+            // Update claim status in our simulated data
+            const claimIndex = allClaims.findIndex(c => c.id === currentClaimId);
+            if (claimIndex !== -1) {
+                allClaims[claimIndex].status = 'approved';
+            }
+
+            // Close modal and refresh data
+            bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
+            loadClaimsForReview();
+
+            // Show success message
+            showToast('Claim Approved', `Claim ${currentClaimId} has been approved successfully.`, 'success');
+
+            // In real application, send to backend
+            console.log(`Claim ${currentClaimId} approved with comments: ${comments}`);
+        }
+
+        function rejectClaim() {
+            if (!currentClaimId) return;
+
+            const comments = document.getElementById('reviewComments').value;
+            if (!comments.trim()) {
+                showToast('Error', 'Please provide comments for rejection', 'danger');
+                return;
+            }
+
+            // Update claim status in our simulated data
+            const claimIndex = allClaims.findIndex(c => c.id === currentClaimId);
+            if (claimIndex !== -1) {
+                allClaims[claimIndex].status = 'rejected';
+                allClaims[claimIndex].rejectionReason = comments;
+            }
+
+            // Close modal and refresh data
+            bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
+            loadClaimsForReview();
+
+            // Show rejection message
+            showToast('Claim Rejected', `Claim ${currentClaimId} has been rejected.`, 'danger');
+
+            // In real application, send to backend
+            console.log(`Claim ${currentClaimId} rejected with comments: ${comments}`);
+        }
+
+        function viewDocument(filename) {
+            // Simulate document viewing
+            showToast('Document View', `Opening ${filename} in viewer...`, 'info');
+            // In real application, this would open the document
+        }
+
+        function downloadDocument(filename) {
+            // Simulate document download
+            showToast('Download Started', `Downloading ${filename}...`, 'success');
+            // In real application, this would download the file
+        }
+
+        function exportToExcel() {
+            // Simulate Excel export
+            showToast('Export Started', 'Preparing Excel export...', 'info');
+            setTimeout(() => {
+                showToast('Export Complete', 'Claims data exported to Excel successfully', 'success');
+            }, 2000);
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'draft': return 'Draft';
+                case 'submitted': return 'Pending Review';
+                case 'approved': return 'Approved';
+                case 'rejected': return 'Rejected';
+                default: return status;
+            }
+        }
+
+        function showToast(title, message, type) {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastEl = document.createElement('div');
+            toastEl.className = `toast align-items-center text-white bg-${type} border-0`;
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+
+            toastEl.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <strong>${title}:</strong> ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+
+            toastContainer.appendChild(toastEl);
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+
+            // Remove toast from DOM after it's hidden
+            toastEl.addEventListener('hidden.bs.toast', function() {
+                toastEl.remove();
+            });
+        }
+    </script>
+}

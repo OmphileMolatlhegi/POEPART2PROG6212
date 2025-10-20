@@ -1,0 +1,81 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model List<ContractMonthlyClaimSystem.Models.Claim>
+@{
+    ViewData["Title"] = "All Claims";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">All Claims</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="@Url.Action("Create", "Claims")" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i> New Claim
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title">Claims Overview</h5>
+    </div>
+    <div class="card-body">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Claim ID</th>
+                            <th>Submitted</th>
+                            <th>Lecturer</th>
+                            <th>Month</th>
+                            <th>Hours</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var claim in Model)
+                        {
+                            <tr>
+                                <td>@claim.Id</td>
+                                <td>@claim.SubmittedDate.ToString("dd MMM yyyy")</td>
+                                <td>@claim.LecturerName</td>
+                                <td>@DateTime.Parse(claim.ClaimMonth + "-01").ToString("MMM yyyy")</td>
+                                <td>@claim.HoursWorked</td>
+                                <td>R@(claim.TotalAmount.ToString("N2"))</td>
+                                <td>
+                                    <span class="status-badge status-@claim.Status.ToString().ToLower()">
+                                        @claim.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="@Url.Action("Details", "Claims", new { id = claim.Id })" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    @if (claim.Status == ContractMonthlyClaimSystem.Models.ClaimStatus.Draft)
+                                    {
+                                        <a href="@Url.Action("Edit", "Claims", new { id = claim.Id })" class="btn btn-sm btn-outline-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                No claims found. <a href="@Url.Action("Create", "Claims")">Submit your first claim</a>.
+            </div>
+        }
+    </div>
+</div>

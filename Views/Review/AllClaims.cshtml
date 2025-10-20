@@ -1,0 +1,126 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model ContractMonthlyClaimSystem.Models.ReviewViewModel
+@{
+    ViewData["Title"] = "All Claims Review";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">All Claims Review</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button class="btn btn-sm btn-outline-info me-2" onclick="refreshClaims()">
+            <i class="fas fa-sync-alt me-1"></i> Refresh
+        </button>
+        <a href="@Url.Action("ExportToExcel", "Review", new { status = Model.FilterStatus, search = Model.SearchTerm })" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-download me-1"></i> Export to Excel
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title">Claims for Review</h5>
+        <div class="row mt-2">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search claims..." id="searchInput" value="@Model.SearchTerm">
+                    <button class="btn btn-outline-secondary" type="button" onclick="searchClaims()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="btn-group float-end" role="group">
+                    <a href="@Url.Action("AllClaims", "Review", new { status = "all", search = Model.SearchTerm })" class="btn btn-sm @(Model.FilterStatus == "all" ? "btn-secondary" : "btn-outline-secondary")">All</a>
+                    <a href="@Url.Action("AllClaims", "Review", new { status = "submitted", search = Model.SearchTerm })" class="btn btn-sm @(Model.FilterStatus == "submitted" ? "btn-primary" : "btn-outline-primary")">Pending</a>
+                    <a href="@Url.Action("AllClaims", "Review", new { status = "approved", search = Model.SearchTerm })" class="btn btn-sm @(Model.FilterStatus == "approved" ? "btn-success" : "btn-outline-success")">Approved</a>
+                    <a href="@Url.Action("AllClaims", "Review", new { status = "rejected", search = Model.SearchTerm })" class="btn btn-sm @(Model.FilterStatus == "rejected" ? "btn-danger" : "btn-outline-danger")">Rejected</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Model.Claims.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Claim ID</th>
+                            <th>Submitted</th>
+                            <th>Lecturer</th>
+                            <th>Month</th>
+                            <th>Hours</th>
+                            <th>Rate</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var claim in Model.Claims)
+                        {
+                            <tr>
+                                <td>@claim.Id</td>
+                                <td>@claim.SubmittedDate.ToString("dd MMM yyyy")</td>
+                                <td>@claim.LecturerName</td>
+                                <td>@DateTime.Parse(claim.ClaimMonth + "-01").ToString("MMM yyyy")</td>
+                                <td>@claim.HoursWorked</td>
+                                <td>R @claim.HourlyRate.ToString("N2")</td>
+                                <td>R @claim.TotalAmount.ToString("N2")</td>
+                                <td>
+                                    <span class="status-badge status-@claim.Status.ToString().ToLower()">
+                                        @claim.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="@Url.Action("Details", "Review", new { id = claim.Id })" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i> Review
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div>
+                    Showing <span id="showingCount">@Model.Claims.Count</span> of <span id="totalCount">@Model.Claims.Count</span> claims
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                No claims found matching your criteria.
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function searchClaims() {
+            const searchTerm = document.getElementById('searchInput').value;
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('search', searchTerm);
+            window.location.href = currentUrl.toString();
+        }
+
+        function refreshClaims() {
+            window.location.reload();
+        }
+
+        // Enter key support for search
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchClaims();
+            }
+        });
+    </script>
+}

@@ -1,0 +1,225 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model ContractMonthlyClaimSystem.Models.Claim
+@{
+    ViewData["Title"] = "Claim Details";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Claim Details - @Model.Id</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="@Url.Action("MyClaims", "Claims")" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-arrow-left me-1"></i> Back to Claims
+        </a>
+        @if (Model.Status == ContractMonthlyClaimSystem.Models.ClaimStatus.Draft)
+        {
+            <a href="@Url.Action("Edit", "Claims", new { id = Model.Id })" class="btn btn-warning">
+                <i class="fas fa-edit me-1"></i> Edit
+            </a>
+        }
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Claim Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Claim ID:</strong> @Model.Id</p>
+                        <p>
+                            <strong>Status:</strong>
+                            <span class="status-badge status-@Model.Status.ToString().ToLower()">
+                                @Model.Status
+                            </span>
+                        </p>
+                        <p><strong>Submitted Date:</strong> @Model.SubmittedDate.ToString("dd MMM yyyy")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Claim Month:</strong> @DateTime.Parse(Model.ClaimMonth + "-01").ToString("MMMM yyyy")</p>
+                        <p><strong>Lecturer:</strong> @Model.LecturerName</p>
+                        @if (Model.ReviewedDate.HasValue)
+                        {
+                            <p><strong>Reviewed Date:</strong> @Model.ReviewedDate.Value.ToString("dd MMM yyyy")</p>
+                            <p><strong>Reviewed By:</strong> @Model.ReviewedBy</p>
+                        }
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <p><strong>Hours Worked:</strong> @Model.HoursWorked</p>
+                        <p><strong>Hourly Rate:</strong> R@(Model.HourlyRate.ToString("N2"))</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Total Amount:</strong> <span class="h5 text-primary">R@(Model.TotalAmount.ToString("N2"))</span></p>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <div class="mt-3">
+                        <strong>Description:</strong>
+                        <p class="mt-1">@Model.Description</p>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.ReviewComments))
+                {
+                    <div class="mt-3">
+                        <strong>Review Comments:</strong>
+                        <div class="alert @(Model.Status == ContractMonthlyClaimSystem.Models.ClaimStatus.Approved ? "alert-success" : "alert-danger") mt-1">
+                            @Model.ReviewComments
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (Model.SupportingDocuments.Any())
+        {
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title">Supporting Documents</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        @foreach (var document in Model.SupportingDocuments)
+                        {
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-file me-2"></i>
+                                    @document.OriginalFileName
+                                    <small class="text-muted ms-2">(@((document.FileSize / 1024 / 1024).ToString("0.00")) MB)</small>
+                                </div>
+                                <div>
+                                    <a href="@Url.Action("Download", "Documents", new { id = document.Id })" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Claim Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    @if (Model.Status == ContractMonthlyClaimSystem.Models.ClaimStatus.Draft)
+                    {
+                        <form method="post" action="@Url.Action("SubmitDraft", "Claims")">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="btn btn-success mb-2" onclick="return confirm('Are you sure you want to submit this claim?')">
+                                <i class="fas fa-paper-plane me-2"></i> Submit Claim
+                            </button>
+                        </form>
+                        <a href="@Url.Action("Edit", "Claims", new { id = Model.Id })" class="btn btn-warning mb-2">
+                            <i class="fas fa-edit me-2"></i> Edit Claim
+                        </a>
+                    }
+                    <a href="#" class="btn btn-outline-primary mb-2" onclick="downloadClaim('@Model.Id')">
+                        <i class="fas fa-download me-2"></i> Download PDF
+                    </a>
+                    <a href="@Url.Action("MyClaims", "Claims")" class="btn btn-outline-secondary">
+                        <i class="fas fa-list me-2"></i> View All Claims
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title">Status Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item @(Model.Status != ContractMonthlyClaimSystem.Models.ClaimStatus.Draft ? "completed" : "")">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <h6>Draft Created</h6>
+                            <small>@Model.SubmittedDate.ToString("dd MMM yyyy HH:mm")</small>
+                        </div>
+                    </div>
+                    @if (Model.Status != ContractMonthlyClaimSystem.Models.ClaimStatus.Draft)
+                    {
+                        <div class="timeline-item @(Model.Status == ContractMonthlyClaimSystem.Models.ClaimStatus.Submitted ? "completed" : "")">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h6>Submitted for Review</h6>
+                                <small>@Model.SubmittedDate.ToString("dd MMM yyyy HH:mm")</small>
+                            </div>
+                        </div>
+                    }
+                    @if (Model.Status == ContractMonthlyClaimSystem.Models.ClaimStatus.Approved || Model.Status == ContractMonthlyClaimSystem.Models.ClaimStatus.Rejected)
+                    {
+                        <div class="timeline-item completed">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h6>@Model.Status</h6>
+                                <small>@Model.ReviewedDate?.ToString("dd MMM yyyy HH:mm")</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function downloadClaim(claimId) {
+            alert('Downloading PDF for claim ' + claimId);
+            // In real application, this would trigger PDF generation and download
+        }
+    </script>
+
+    <style>
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: -30px;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #6c757d;
+            border: 3px solid white;
+        }
+
+        .timeline-item.completed .timeline-marker {
+            background-color: #28a745;
+        }
+
+        .timeline-content h6 {
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .timeline-content small {
+            color: #6c757d;
+        }
+    </style>
+}

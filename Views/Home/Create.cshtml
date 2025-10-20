@@ -1,0 +1,287 @@
+﻿@{
+    ViewData["Title"] = "Submit New Claim";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Submit New Claim</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Claim Information</h5>
+            </div>
+            <div class="card-body">
+                <form id="claimForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="claimMonth" class="form-label">Claim Month *</label>
+                        <input type="month" class="form-control" id="claimMonth" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="hoursWorked" class="form-label">Hours Worked *</label>
+                                <input type="number" class="form-control" id="hoursWorked" min="1" max="744" step="0.5" required>
+                                <div class="form-text">Enter total hours worked this month</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="hourlyRate" class="form-label">Hourly Rate (R) *</label>
+                                <input type="number" class="form-control" id="hourlyRate" min="0" step="0.01" required>
+                                <div class="form-text">Your contracted hourly rate</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="totalAmount" class="form-label">Total Amount (R)</label>
+                        <input type="text" class="form-control" id="totalAmount" readonly style="font-weight: bold; font-size: 1.1em;">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description/Notes</label>
+                        <textarea class="form-control" id="description" rows="3" placeholder="Describe the work completed, courses taught, or any additional information..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="supportingDocuments" class="form-label">Supporting Documents</label>
+                        <input type="file" class="form-control" id="supportingDocuments" multiple>
+                        <div class="form-text">You can upload any file type. There are no restrictions on file size or format.</div>
+                    </div>
+
+                    <div id="fileList" class="mb-3"></div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-secondary me-md-2" onclick="saveAsDraft()">Save as Draft</button>
+                        <button type="submit" class="btn btn-primary">Submit Claim</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Claim Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Your claim will be reviewed by the Programme Coordinator and Academic Manager.
+                </div>
+                <div id="claimSummary">
+                    <p><strong>Hours:</strong> <span id="summaryHours">0</span></p>
+                    <p><strong>Rate:</strong> R<span id="summaryRate">0.00</span></p>
+                    <p><strong>Total:</strong> R<span id="summaryTotal">0.00</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title">Quick Guide</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i> No file restrictions</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Upload multiple files</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Real-time calculation</li>
+                    <li><i class="fas fa-check text-success me-2"></i> Save as draft option</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const hoursInput = document.getElementById('hoursWorked');
+            const rateInput = document.getElementById('hourlyRate');
+            const totalInput = document.getElementById('totalAmount');
+            const fileInput = document.getElementById('supportingDocuments');
+            const fileList = document.getElementById('fileList');
+
+            // Calculate total amount when hours or rate changes
+            function calculateTotal() {
+                const hours = parseFloat(hoursInput.value) || 0;
+                const rate = parseFloat(rateInput.value) || 0;
+                const total = hours * rate;
+
+                totalInput.value = 'R ' + total.toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+                // Update summary
+                document.getElementById('summaryHours').textContent = hours;
+                document.getElementById('summaryRate').textContent = rate.toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('summaryTotal').textContent = total.toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+
+            hoursInput.addEventListener('input', calculateTotal);
+            rateInput.addEventListener('input', calculateTotal);
+
+            // Handle file selection - NO RESTRICTIONS
+            fileInput.addEventListener('change', function() {
+                fileList.innerHTML = '';
+
+                if (this.files.length > 0) {
+                    const list = document.createElement('ul');
+                    list.className = 'list-group';
+
+                    for (let i = 0; i < this.files.length; i++) {
+                        const file = this.files[i];
+                        const fileSize = (file.size / (1024 * 1024)).toFixed(2); // Size in MB
+
+                        const listItem = document.createElement('li');
+                        listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                        listItem.innerHTML = `
+                            <div>
+                                <i class="fas fa-file me-2"></i>
+                                ${file.name}
+                                <small class="text-muted ms-2">(${fileSize} MB)</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${i})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        `;
+                        list.appendChild(listItem);
+                    }
+
+                    fileList.appendChild(list);
+                }
+            });
+
+            // Handle form submission
+            document.getElementById('claimForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitClaim(false);
+            });
+
+            // Set default month to current month
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('claimMonth').value = `${year}-${month}`;
+
+            // Initial calculation
+            calculateTotal();
+        });
+
+        function removeFile(index) {
+            // Create a new DataTransfer object to manage files
+            const dataTransfer = new DataTransfer();
+            const fileInput = document.getElementById('supportingDocuments');
+
+            // Add all files except the one to remove
+            for (let i = 0; i < fileInput.files.length; i++) {
+                if (i !== index) {
+                    dataTransfer.items.add(fileInput.files[i]);
+                }
+            }
+
+            // Update file input files
+            fileInput.files = dataTransfer.files;
+
+            // Trigger change event to update UI
+            const event = new Event('change');
+            fileInput.dispatchEvent(event);
+        }
+
+        function saveAsDraft() {
+            if (validateForm(true)) {
+                submitClaim(true);
+            }
+        }
+
+        function submitClaim(isDraft) {
+            if (!validateForm(isDraft) && !isDraft) {
+                return;
+            }
+
+            // Show loading state
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+            submitBtn.disabled = true;
+
+            // In a real application, this would be an API call
+            setTimeout(() => {
+                showToast(
+                    'Success',
+                    isDraft ? 'Claim saved as draft successfully!' : 'Claim submitted successfully!',
+                    'success'
+                );
+
+                // Reset form
+                document.getElementById('claimForm').reset();
+                document.getElementById('fileList').innerHTML = '';
+                calculateTotal();
+
+                // Reset button
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+
+                // Redirect after delay
+                if (!isDraft) {
+                    setTimeout(() => {
+                        window.location.href = '@Url.Action("Index", "Home")';
+                    }, 2000);
+                }
+            }, 1500);
+        }
+
+        function validateForm(allowPartial = false) {
+            const hours = document.getElementById('hoursWorked').value;
+            const rate = document.getElementById('hourlyRate').value;
+            const month = document.getElementById('claimMonth').value;
+
+            if (!month && !allowPartial) {
+                showToast('Error', 'Please select a claim month', 'danger');
+                return false;
+            }
+
+            if ((!hours || hours <= 0) && !allowPartial) {
+                showToast('Error', 'Please enter valid hours worked', 'danger');
+                return false;
+            }
+
+            if ((!rate || rate <= 0) && !allowPartial) {
+                showToast('Error', 'Please enter a valid hourly rate', 'danger');
+                return false;
+            }
+
+            return true;
+        }
+
+        function showToast(title, message, type) {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastEl = document.createElement('div');
+            toastEl.className = `toast align-items-center text-white bg-${type} border-0`;
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+
+            toastEl.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <strong>${title}:</strong> ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+
+            toastContainer.appendChild(toastEl);
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+
+            // Remove toast from DOM after it's hidden
+            toastEl.addEventListener('hidden.bs.toast', function() {
+                toastEl.remove();
+            });
+        }
+    </script>
+}

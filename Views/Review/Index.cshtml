@@ -1,0 +1,82 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model List<ContractMonthlyClaimSystem.Models.Claim>
+@{
+    ViewData["Title"] = "Pending Claims Review";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Pending Claims Review</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="@Url.Action("AllClaims", "Review")" class="btn btn-outline-secondary">
+            <i class="fas fa-list me-2"></i> View All Claims
+        </a>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <div class="row">
+        @foreach (var claim in Model)
+        {
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">@claim.Id</h5>
+                        <span class="status-badge status-submitted">Pending Review</span>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Lecturer:</strong> @claim.LecturerName</p>
+                        <p><strong>Month:</strong> @DateTime.Parse(claim.ClaimMonth + "-01").ToString("MMMM yyyy")</p>
+                        <p><strong>Hours:</strong> @claim.HoursWorked</p>
+                        <p><strong>Rate:</strong> R@(claim.HourlyRate.ToString("N2"))</p>
+                        <p><strong>Total:</strong> <span class="h5 text-primary">R@(claim.TotalAmount.ToString("N2"))</span></p>
+
+                        @if (!string.IsNullOrEmpty(claim.Description))
+                        {
+                            <p><strong>Description:</strong> @claim.Description</p>
+                        }
+
+                        <div class="mt-3">
+                            <strong>Supporting Documents:</strong>
+                            @if (claim.SupportingDocuments.Any())
+                            {
+                                <ul class="list-unstyled mt-1">
+                                    @foreach (var doc in claim.SupportingDocuments.Take(3))
+                                    {
+                                        <li><i class="fas fa-file me-2 text-muted"></i> @doc.OriginalFileName</li>
+                                    }
+                                    @if (claim.SupportingDocuments.Count > 3)
+                                    {
+                                        <li><small class="text-muted">+ @(claim.SupportingDocuments.Count - 3) more files</small></li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <p class="text-muted mt-1">No supporting documents</p>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-grid gap-2">
+                            <a href="@Url.Action("Details", "Review", new { id = claim.Id })" class="btn btn-primary">
+                                <i class="fas fa-clipboard-check me-2"></i> Review Claim
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle me-2"></i>
+        All claims have been reviewed! There are no pending claims at the moment.
+    </div>
+}

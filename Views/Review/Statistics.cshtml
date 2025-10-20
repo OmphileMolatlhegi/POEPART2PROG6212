@@ -1,0 +1,224 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model ContractMonthlyClaimSystem.Models.ReviewStatistics
+@{
+    ViewData["Title"] = "Review Statistics";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Review Statistics</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="@Url.Action("AllClaims", "Review")" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-arrow-left me-1"></i> Back to Claims
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Claims</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalClaims</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-file-invoice fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Claims This Month</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.ClaimsThisMonth</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Review</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.PendingReview</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Amount This Month</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">R@(Model.TotalAmountThisMonth.ToString("N2"))</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Monthly Trends</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Submitted</th>
+                                <th>Approved</th>
+                                <th>Rejected</th>
+                                <th>Total Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var trend in Model.MonthlyTrends)
+                            {
+                                <tr>
+                                    <td>@trend.Month</td>
+                                    <td>@trend.SubmittedCount</td>
+                                    <td class="text-success">@trend.ApprovedCount</td>
+                                    <td class="text-danger">@trend.RejectedCount</td>
+                                    <td>R@(trend.TotalAmount.ToString("N2"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Top Lecturers by Amount</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Lecturer</th>
+                                <th>Total Claims</th>
+                                <th>Approved</th>
+                                <th>Rejected</th>
+                                <th>Total Amount</th>
+                                <th>Approval Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var lecturer in Model.TopLecturers)
+                            {
+                                <tr>
+                                    <td>@lecturer.LecturerName</td>
+                                    <td>@lecturer.TotalClaims</td>
+                                    <td class="text-success">@lecturer.ApprovedClaims</td>
+                                    <td class="text-danger">@lecturer.RejectedClaims</td>
+                                    <td>R@(lecturer.TotalAmount.ToString("N2"))</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-success" role="progressbar"
+                                                 style="width: @(lecturer.ApprovalRate)%;"
+                                                 aria-valuenow="@(lecturer.ApprovalRate)"
+                                                 aria-valuemin="0"
+                                                 aria-valuemax="100">
+                                                @(lecturer.ApprovalRate.ToString("0.0"))%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Approval Metrics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-6">
+                        <div class="card bg-success text-white mb-3">
+                            <div class="card-body">
+                                <h3>@(Model.AverageApprovalRate.ToString("0.0"))%</h3>
+                                <p class="mb-0">Average Approval Rate</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-danger text-white mb-3">
+                            <div class="card-body">
+                                <h3>@(Model.AverageRejectionRate.ToString("0.0"))%</h3>
+                                <p class="mb-0">Average Rejection Rate</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <p><strong>Most Active Reviewer:</strong> @Model.MostActiveReviewer</p>
+                    <p><strong>Claims Processed Today:</strong> @Model.ClaimsProcessedToday</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="@Url.Action("AllClaims", "Review")" class="btn btn-primary mb-2">
+                        <i class="fas fa-clipboard-list me-2"></i> Review Claims
+                    </a>
+                    <a href="@Url.Action("ExportToExcel", "Review")" class="btn btn-outline-success mb-2">
+                        <i class="fas fa-download me-2"></i> Export Data
+                    </a>
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary">
+                        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

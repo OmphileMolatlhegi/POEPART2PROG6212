@@ -1,0 +1,63 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model ContractMonthlyClaimSystem.Models.Claim
+@{
+    ViewData["Title"] = "Edit Claim";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Edit Claim - @Model.Id</h1>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title">Edit Claim Information</h5>
+    </div>
+    <div class="card-body">
+        <form asp-action="Edit" method="post">
+            <input type="hidden" asp-for="Id" />
+
+            <div class="mb-3">
+                <label asp-for="ClaimMonth" class="form-label">Claim Month *</label>
+                <input asp-for="ClaimMonth" type="month" class="form-control" required>
+                <span asp-validation-for="ClaimMonth" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label asp-for="HoursWorked" class="form-label">Hours Worked *</label>
+                        <input asp-for="HoursWorked" type="number" class="form-control" min="1" max="744" step="0.5" required>
+                        <span asp-validation-for="HoursWorked" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label asp-for="HourlyRate" class="form-label">Hourly Rate (R) *</label>
+                        <input asp-for="HourlyRate" type="number" class="form-control" min="0" step="0.01" required>
+                        <span asp-validation-for="HourlyRate" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Total Amount (R)</label>
+                <input type="text" class="form-control" value="R @Model.TotalAmount.ToString("N2")" readonly style="font-weight: bold;">
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label">Description/Notes</label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="@Url.Action("MyClaims", "Claims")" class="btn btn-secondary me-md-2">Cancel</a>
+                <button type="submit" class="btn btn-primary">Update Claim</button>
+            </div>
+        </form>
+    </div>
+</div>
